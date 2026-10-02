@@ -45,12 +45,15 @@ workflows:
             echo "Push notification entitlement is missing."
             exit 1
           fi
-      - name: Get Flutter packages
-        script: flutter pub get
+      - name: Prepare CocoaPods dependency mode
+        script: |
+          flutter config --no-enable-swift-package-manager
+          flutter clean
+          flutter pub get
       - name: Install CocoaPods dependencies
         script: |
           cd ios
-          pod install
+          pod install --repo-update
       - name: Set up Xcode signing
         script: xcode-project use-profiles
       - name: Analyze project
