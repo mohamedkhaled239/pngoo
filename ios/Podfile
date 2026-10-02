@@ -32,7 +32,9 @@ require File.expand_path(
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  use_frameworks!
+  # Firebase recommends static frameworks for CocoaPods integrations. Dynamic
+  # plugin frameworks trigger non-modular umbrella-header errors on new Xcode.
+  use_frameworks! :linkage => :static
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
@@ -62,6 +64,10 @@ post_install do |installer|
 
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+
+      if %w[firebase_core firebase_messaging cloud_firestore].include?(target.name)
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      end
     end
   end
 
@@ -102,6 +108,36 @@ post_install do |installer|
       puts "Verified #{grpc_basic_seq_file} already contains the Xcode template fix."
     else
       raise "Unsupported gRPC basic_seq.h layout: #{grpc_basic_seq_file}"
+    end
+  end
+
+  # firebase_messaging 14.x imports Firebase's umbrella header from inside a
+  # plugin framework. Xcode 16+ rejects that non-modular include, so import the
+  # two modules the plugin actually uses instead.
+  firebase_messaging_header = File.expand_path(
+    File.join(
+      '.symlinks',
+      'plugins',
+      'firebase_messaging',
+      'ios',
+      'Classes',
+      'FLTFirebaseMessagingPlugin.h',
+    ),
+    __dir__,
+  )
+  if File.exist?(firebase_messaging_header)
+    messaging_source = File.read(firebase_messaging_header)
+    umbrella_import = '#import <Firebase/Firebase.h>'
+    modular_imports = "@import FirebaseCore;\n@import FirebaseMessaging;"
+
+    if messaging_source.include?(umbrella_import)
+      File.write(
+        firebase_messaging_header,
+        messaging_source.gsub(umbrella_import, modular_imports),
+      )
+      puts 'Patched firebase_messaging to use modular Firebase imports.'
+    elsif !messaging_source.include?('@import FirebaseMessaging;')
+      raise 'Unsupported FLTFirebaseMessagingPlugin.h layout; modular import patch was not applied.'
     end
   end
 
