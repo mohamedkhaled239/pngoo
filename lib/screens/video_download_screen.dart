@@ -12,7 +12,6 @@ import '../providers/video_download_provider.dart';
 import '../services/ad_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/studio_brand.dart';
-import 'settings_screen.dart';
 
 class VideoDownloadScreen extends StatefulWidget {
   const VideoDownloadScreen({super.key});
@@ -137,13 +136,21 @@ class _VideoDownloadScreenState extends State<VideoDownloadScreen> {
           bottom: false,
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final isTablet = constraints.maxWidth >= 600;
               return SingleChildScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 124),
+                padding: EdgeInsets.fromLTRB(
+                  isTablet ? 32 : 20,
+                  isTablet ? 24 : 18,
+                  isTablet ? 32 : 20,
+                  124,
+                ),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 610),
+                    constraints: BoxConstraints(
+                      maxWidth: isTablet ? 760 : 610,
+                    ),
                     child: Column(
                       children: [
                         _buildHeader(),
@@ -192,12 +199,7 @@ class _VideoDownloadScreenState extends State<VideoDownloadScreen> {
   }
 
   Widget _buildHeader() {
-    return StudioAppBar(
-      onSettings: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const SettingsScreen()),
-      ),
-    );
+    return const StudioAppBar();
   }
 
   Widget _buildAutoDetectStatus() {

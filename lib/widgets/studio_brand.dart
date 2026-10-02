@@ -79,10 +79,7 @@ class StudioBrand extends StatelessWidget {
 }
 
 class StudioAppBar extends StatelessWidget {
-  const StudioAppBar({super.key, this.onClose, this.onSettings});
-
-  final VoidCallback? onClose;
-  final VoidCallback? onSettings;
+  const StudioAppBar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +91,7 @@ class StudioAppBar extends StatelessWidget {
         textDirection: TextDirection.rtl,
         child: Container(
           width: double.infinity,
-          height: 64,
+          height: 72,
           decoration: BoxDecoration(
             borderRadius: radius,
             gradient: const LinearGradient(
@@ -133,66 +130,12 @@ class StudioAppBar extends StatelessWidget {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const StudioBrand(),
-                      const Spacer(),
-                      if (onClose != null)
-                        _BarAction(
-                          tooltip: 'إغلاق المشروع',
-                          icon: Icons.close_rounded,
-                          onPressed: onClose,
-                        )
-                      else if (onSettings != null)
-                        _BarAction(
-                          tooltip: 'الإعدادات',
-                          icon: Icons.tune_rounded,
-                          onPressed: onSettings,
-                        ),
-                    ],
-                  ),
-                ),
+                const Center(child: StudioBrand()),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _BarAction extends StatelessWidget {
-  const _BarAction({
-    required this.tooltip,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      padding: EdgeInsets.zero,
-      style: IconButton.styleFrom(
-        fixedSize: const Size(40, 40),
-        minimumSize: const Size(40, 40),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        backgroundColor: AppColors.surfaceLight,
-        foregroundColor: AppColors.textSecondary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: AppColors.outline.withValues(alpha: .6)),
-        ),
-      ),
-      icon: Icon(icon, size: 20),
     );
   }
 }

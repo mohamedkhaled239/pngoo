@@ -93,7 +93,7 @@ class _MyAppState extends State<MyApp> {
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, child) {
           return MaterialApp(
-            title: 'الذئب',
+            title: 'PngoSave',
             debugShowCheckedModeBanner: false,
             builder: (context, child) {
               final mediaQuery = MediaQuery.of(context);

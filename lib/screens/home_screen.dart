@@ -13,7 +13,6 @@ import '../widgets/studio_brand.dart';
 import 'edit_screen.dart';
 import 'merge_screen.dart';
 import 'player_screen.dart';
-import 'settings_screen.dart';
 import 'trim_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -65,6 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<VideoEditorProvider>();
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    final isTablet = viewportWidth >= 600;
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -72,10 +73,15 @@ class _HomeScreenState extends State<HomeScreen> {
         body: SafeArea(
           bottom: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 124),
+            padding: EdgeInsets.fromLTRB(
+              isTablet ? 32 : 20,
+              isTablet ? 24 : 18,
+              isTablet ? 32 : 20,
+              124,
+            ),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 610),
+                constraints: BoxConstraints(maxWidth: isTablet ? 760 : 610),
                 child: provider.videoPath == null
                     ? _buildWelcomeContent()
                     : _buildSelectedVideo(provider),
@@ -90,12 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildWelcomeContent() {
     return Column(
       children: [
-        StudioAppBar(
-          onSettings: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const SettingsScreen()),
-          ),
-        ),
+        const StudioAppBar(),
         const SizedBox(height: 22),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -359,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        StudioAppBar(onClose: provider.reset),
+        const StudioAppBar(),
         const SizedBox(height: 22),
         const Text(
           'مشروعك جاهز للتحرير',
@@ -380,14 +381,15 @@ class _HomeScreenState extends State<HomeScreen> {
             context,
             MaterialPageRoute(builder: (_) => PlayerScreen(videoPath: path)),
           ),
-          child: Container(
-            height: 215,
-            decoration: BoxDecoration(
-              color: const Color(0xFF070B11),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF070B11),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
               fit: StackFit.expand,
               children: [
                 if (provider.thumbnailPath != null)
@@ -399,6 +401,32 @@ class _HomeScreenState extends State<HomeScreen> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
+                  ),
+                ),
+                Positioned(
+                  top: 14,
+                  left: 14,
+                  child: Row(
+                    textDirection: TextDirection.ltr,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _VideoOverlayButton(
+                        tooltip: 'إزالة الفيديو',
+                        icon: Icons.delete_outline_rounded,
+                        color: const Color(0xFFFF6B6B),
+                        onPressed: provider.reset,
+                      ),
+                      const SizedBox(width: 8),
+                      _VideoOverlayButton(
+                        tooltip: 'استبدال من الاستوديو',
+                        icon: Icons.video_library_outlined,
+                        color: AppColors.primary,
+                        busy: _isPicking,
+                        onPressed: _isPicking
+                            ? null
+                            : () => _pickVideo(ImageSource.gallery),
+                      ),
+                    ],
                   ),
                 ),
                 const Center(
@@ -421,19 +449,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
         const SizedBox(height: 22),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 11,
-          crossAxisSpacing: 11,
-          childAspectRatio: 2.25,
-          children: [
+        LayoutBuilder(
+          builder: (context, constraints) => GridView.count(
+            crossAxisCount: constraints.maxWidth >= 700 ? 3 : 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 11,
+            crossAxisSpacing: 11,
+            childAspectRatio: constraints.maxWidth >= 700 ? 2.05 : 2.25,
+            children: [
             _editAction(
               'قص الفيديو',
               Icons.content_cut_rounded,
@@ -484,7 +514,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
         if (provider.isProcessing) ...[
           const SizedBox(height: 20),
@@ -575,6 +606,51 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: const Color(0xFFB84949),
         behavior: SnackBarBehavior.floating,
       ),
+    );
+  }
+}
+
+class _VideoOverlayButton extends StatelessWidget {
+  const _VideoOverlayButton({
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+    this.busy = false,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onPressed;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        fixedSize: const Size(44, 44),
+        minimumSize: const Size(44, 44),
+        backgroundColor: const Color(0xE6151C26),
+        disabledBackgroundColor: const Color(0xB3151C26),
+        foregroundColor: color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(13),
+          side: BorderSide(color: color.withValues(alpha: .32)),
+        ),
+      ),
+      icon: busy
+          ? SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.2,
+                color: color,
+              ),
+            )
+          : Icon(icon, size: 22),
     );
   }
 }

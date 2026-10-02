@@ -79,29 +79,36 @@ class _StudioNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = MediaQuery.sizeOf(context).width >= 600;
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-      child: Container(
-        height: 80,
-        padding: const EdgeInsets.all(5),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E232D),
-          borderRadius: BorderRadius.circular(40),
-          border: Border.all(color: const Color(0xFF252C37)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x99050B11),
-              blurRadius: 28,
-              offset: Offset(0, 10),
+      minimum: EdgeInsets.fromLTRB(isTablet ? 32 : 20, 0, isTablet ? 32 : 20, 14),
+      child: Center(
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Container(
+            height: 80,
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E232D),
+              borderRadius: BorderRadius.circular(40),
+              border: Border.all(color: const Color(0xFF252C37)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x99050B11),
+                  blurRadius: 28,
+                  offset: Offset(0, 10),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          textDirection: TextDirection.rtl,
-          children: [
-            _item(0, 'تنزيل الفيديو', Icons.cloud_download_outlined),
-            _item(1, 'تحرير الفيديو', Icons.video_settings_outlined),
-          ],
+            child: Row(
+              textDirection: TextDirection.rtl,
+              children: [
+                _item(0, 'تنزيل الفيديو', Icons.cloud_download_outlined),
+                _item(1, 'تحرير الفيديو', Icons.video_settings_outlined),
+              ],
+            ),
+          ),
         ),
       ),
     );
