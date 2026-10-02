@@ -1,0 +1,28 @@
+{
+  "@@locale": "en",
+  "appTitle": "Video Downloader & Editor",
+  "pasteLinkHint": "Paste the video link and it will be downloaded directly to the gallery",
+  "urlHint": "https://www.tiktok.com/...",
+  "paste": "Paste",
+  "downloadVideo": "Download Video",
+  "enterVideoUrl": "Please enter the video URL",
+  "enterValidUrl": "Please enter a valid URL",
+  "status": "Status",
+  "downloading": "Downloading",
+  "fetchingInfo": "Fetching information",
+  "saving": "Saving",
+  "processing": "Processing",
+  "downloadSuccess": "Video downloaded successfully ✓",
+  "noVideoFound": "No video found for download",
+  "downloadFailed": "Failed to download video",
+  "saveFailed": "Failed to save video to gallery",
+  "errorOccurred": "An error occurred: {error}",
+  "@errorOccurred": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "albumName": "Video Editing App"
+}

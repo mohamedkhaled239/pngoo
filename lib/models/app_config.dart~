@@ -1,0 +1,54 @@
+class AppConfig {
+  final bool isVideoEdit;
+  final String rapidApiBaseUrl;
+  final String rapidApiKey;
+  final String rapidApiHost;
+  final bool enableVideoDownload;
+  final bool enableVideoEdit;
+
+  AppConfig({
+    required this.isVideoEdit,
+    required this.rapidApiBaseUrl,
+    required this.rapidApiKey,
+    required this.rapidApiHost,
+    this.enableVideoDownload = true,
+    this.enableVideoEdit = true,
+  });
+
+  factory AppConfig.fromFirestore(Map<String, dynamic> data) {
+    return AppConfig(
+      isVideoEdit: data['isVideoEdit'] ?? true,
+      rapidApiBaseUrl: data['rapidApiBaseUrl'] ??
+          'https:
+      rapidApiKey: data['rapidApiKey'] ?? '',
+      rapidApiHost: data['rapidApiHost'] ??
+          'auto-download-all-in-one.p.rapidapi.com',
+      enableVideoDownload: data['enableVideoDownload'] ?? true,
+      enableVideoEdit: data['enableVideoEdit'] ?? true,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'isVideoEdit': isVideoEdit,
+      'rapidApiBaseUrl': rapidApiBaseUrl,
+      'rapidApiKey': rapidApiKey,
+      'rapidApiHost': rapidApiHost,
+      'enableVideoDownload': enableVideoDownload,
+      'enableVideoEdit': enableVideoEdit,
+    };
+  }
+
+  
+  factory AppConfig.defaultConfig() {
+    return AppConfig(
+      isVideoEdit: true,
+      rapidApiBaseUrl: 'https:
+      rapidApiKey: '239d768d8cmshd49361eb49f1af5p1ab3fejsn6ed58d950752',
+      rapidApiHost: 'auto-download-all-in-one.p.rapidapi.com',
+      enableVideoDownload: true,
+      enableVideoEdit: true,
+    );
+  }
+}
+

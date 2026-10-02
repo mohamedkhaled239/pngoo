@@ -1,0 +1,246 @@
+import 'package:flutter/material.dart';
+
+import '../utils/app_colors.dart';
+
+class StudioBrand extends StatelessWidget {
+  const StudioBrand({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'يومي، استوديو الفيديو',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        textDirection: TextDirection.rtl,
+        children: [
+          // أيقونة الشعار
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withValues(alpha: .26),
+                  AppColors.primary.withValues(alpha: .08),
+                ],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+              ),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: .35),
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: .14),
+                  blurRadius: 12,
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.play_arrow_rounded,
+              color: AppColors.primary,
+              size: 25,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // الاسم + الوصف
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'يومي',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                  height: 1.15,
+                ),
+              ),
+              SizedBox(height: 2),
+              Text(
+                'استوديو الفيديو',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  height: 1.15,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class StudioAppBar extends StatelessWidget {
+  const StudioAppBar({super.key, this.onClose, this.onSettings});
+
+  final VoidCallback? onClose;
+  final VoidCallback? onSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(20);
+
+    return Semantics(
+      header: true,
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          width: double.infinity,
+          height: 64,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: const LinearGradient(
+              colors: [Color(0xFF161D26), Color(0xFF11161D)],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+            border: Border.all(color: const Color(0xFF232C38)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 18,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: radius,
+            child: Stack(
+              children: [
+                // خط إضاءة رفيع في الأعلى
+                Positioned(
+                  top: 0,
+                  left: 40,
+                  right: 40,
+                  height: 1.5,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          AppColors.primary.withValues(alpha: .6),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const StudioBrand(),
+                      const Spacer(),
+                      if (onClose != null)
+                        _BarAction(
+                          tooltip: 'إغلاق المشروع',
+                          icon: Icons.close_rounded,
+                          onPressed: onClose,
+                        )
+                      else if (onSettings != null)
+                        _BarAction(
+                          tooltip: 'الإعدادات',
+                          icon: Icons.tune_rounded,
+                          onPressed: onSettings,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BarAction extends StatelessWidget {
+  const _BarAction({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      padding: EdgeInsets.zero,
+      style: IconButton.styleFrom(
+        fixedSize: const Size(40, 40),
+        minimumSize: const Size(40, 40),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        backgroundColor: AppColors.surfaceLight,
+        foregroundColor: AppColors.textSecondary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: AppColors.outline.withValues(alpha: .6)),
+        ),
+      ),
+      icon: Icon(icon, size: 20),
+    );
+  }
+}
+
+class MintButton extends StatelessWidget {
+  const MintButton({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    this.busy = false,
+    this.height = 58,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final bool busy;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: height,
+      child: FilledButton.icon(
+        onPressed: busy ? null : onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          disabledBackgroundColor: AppColors.primary.withValues(alpha: .55),
+          foregroundColor: const Color(0xFF073F34),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(17),
+          ),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        ),
+        icon: busy
+            ? const SizedBox(
+                width: 21,
+                height: 21,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: Color(0xFF073F34),
+                ),
+              )
+            : Icon(icon, size: 25),
+        label: Text(label),
+      ),
+    );
+  }
+}

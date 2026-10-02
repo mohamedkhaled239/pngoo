@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "234949198999",
+    "project_id": "videodownloud",
+    "storage_bucket": "videodownloud.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:234949198999:android:75b65ee70f87aacb5d15d2",
+        "android_client_info": {
+          "package_name": "com.example.video_downloud_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiiAytIyMzWZ3_HqleZxZUUQgpFnKz6CA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

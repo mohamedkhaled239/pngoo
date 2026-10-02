@@ -1,0 +1,111 @@
+workflows:
+  ios-app-store:
+    name: iOS App Store
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    environment:
+      groups:
+        - appstore_credentials
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.tolba.videoDownloudApp
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Validate production configuration
+        script: |
+          if ! grep -q "ca-app-pub-3233536447139983~2215457226" ios/Runner/Info.plist; then
+            echo "The production iOS AdMob app ID is missing from Info.plist."
+            exit 1
+          fi
+          if ! grep -q "iosBundleId: 'com.tolba.videoDownloudApp'" lib/firebase_options.dart; then
+            echo "Firebase iOS bundle ID does not match the release bundle ID."
+            exit 1
+          fi
+          if [ ! -f ios/Runner/GoogleService-Info.plist ]; then
+            echo "GoogleService-Info.plist is missing from the iOS Runner target."
+            exit 1
+          fi
+          for FIREBASE_CONFIG in lib/firebase_options.dart firebase.json ios/Runner/GoogleService-Info.plist; do
+            if ! grep -q "1:234949198999:ios:e198457c0a9209975d15d2" "$FIREBASE_CONFIG"; then
+              echo "$FIREBASE_CONFIG does not reference the expected Tolba Firebase iOS app."
+              exit 1
+            fi
+          done
+          if ! grep -q "com.tolba.videoDownloudApp" ios/Runner/GoogleService-Info.plist; then
+            echo "GoogleService-Info.plist does not match the release bundle ID."
+            exit 1
+          fi
+          if ! grep -q "remote-notification" ios/Runner/Info.plist; then
+            echo "Remote notification background mode is missing."
+            exit 1
+          fi
+          if ! grep -q "aps-environment" ios/Runner/Runner.entitlements; then
+            echo "Push notification entitlement is missing."
+            exit 1
+          fi
+      - name: Get Flutter packages
+        script: flutter pub get
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios
+          pod install
+      - name: Set up Xcode signing
+        script: xcode-project use-profiles
+      - name: Analyze project
+        script: flutter analyze --no-fatal-infos
+      - name: Run tests
+        script: flutter test
+      - name: Build signed IPA
+        script: |
+          flutter build ipa --release \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+      - name: Verify App Store push entitlement
+        script: |
+          APP_PATH=$(find build/ios/archive/Runner.xcarchive/Products/Applications -type d -name "*.app" -print -quit)
+          if [ -z "$APP_PATH" ]; then
+            echo "Signed iOS application was not found in the archive."
+            exit 1
+          fi
+
+          SIGNED_BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist")
+          if [ "$SIGNED_BUNDLE_ID" != "com.tolba.videoDownloudApp" ]; then
+            echo "Unexpected signed bundle ID: $SIGNED_BUNDLE_ID"
+            exit 1
+          fi
+
+          BUNDLED_FIREBASE_PLIST="$APP_PATH/GoogleService-Info.plist"
+          if [ ! -f "$BUNDLED_FIREBASE_PLIST" ]; then
+            echo "GoogleService-Info.plist was not bundled in the signed application."
+            exit 1
+          fi
+          BUNDLED_FIREBASE_APP_ID=$(/usr/libexec/PlistBuddy -c "Print :GOOGLE_APP_ID" "$BUNDLED_FIREBASE_PLIST")
+          BUNDLED_FIREBASE_BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :BUNDLE_ID" "$BUNDLED_FIREBASE_PLIST")
+          if [ "$BUNDLED_FIREBASE_APP_ID" != "1:234949198999:ios:e198457c0a9209975d15d2" ] || [ "$BUNDLED_FIREBASE_BUNDLE_ID" != "$SIGNED_BUNDLE_ID" ]; then
+            echo "Bundled Firebase configuration does not match the signed application."
+            exit 1
+          fi
+
+          ENTITLEMENTS_PATH=/tmp/runner-release-entitlements.plist
+          codesign -d --entitlements :- "$APP_PATH" > "$ENTITLEMENTS_PATH"
+          APS_ENVIRONMENT=$(/usr/libexec/PlistBuddy -c "Print :aps-environment" "$ENTITLEMENTS_PATH" 2>/dev/null || true)
+          if [ "$APS_ENVIRONMENT" != "production" ]; then
+            echo "App Store build is missing aps-environment=production. Found: ${APS_ENVIRONMENT:-missing}"
+            echo "Enable Push Notifications for the App ID and regenerate the App Store provisioning profile."
+            exit 1
+          fi
+
+          echo "Verified production APNs entitlement for $SIGNED_BUNDLE_ID."
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - /tmp/runner-release-entitlements.plist
+      - flutter_drive.log
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true

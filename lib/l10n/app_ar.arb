@@ -1,0 +1,21 @@
+{
+  "@@locale": "ar",
+  "appTitle": "محمل ومحرر الفيديو",
+  "pasteLinkHint": "الصق رابط الفيديو وسيتم التحميل مباشرة للمعرض",
+  "urlHint": "https://www.tiktok.com/...",
+  "paste": "لصق",
+  "downloadVideo": "تحميل الفيديو",
+  "enterVideoUrl": "الرجاء إدخال رابط الفيديو",
+  "enterValidUrl": "الرجاء إدخال رابط صحيح",
+  "status": "الحالة",
+  "downloading": "جاري التحميل",
+  "fetchingInfo": "جاري جلب المعلومات",
+  "saving": "جاري الحفظ",
+  "processing": "قيد المعالجة",
+  "downloadSuccess": "تم تحميل الفيديو بنجاح ✓",
+  "noVideoFound": "لم يتم العثور على فيديو للتحميل",
+  "downloadFailed": "فشل تحميل الفيديو",
+  "saveFailed": "فشل حفظ الفيديو في المعرض",
+  "errorOccurred": "حدث خطأ: {error}",
+  "albumName": "تطبيق تحرير الفيديو"
+}
