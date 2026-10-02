@@ -353,7 +353,9 @@ class _TrimScreenState extends State<TrimScreen> {
         _rangeValues.end.toInt(),
       );
 
-      if (result != null && mounted) {
+      if (!mounted) return;
+
+      if (result != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Row(
@@ -368,6 +370,10 @@ class _TrimScreenState extends State<TrimScreen> {
           ),
         );
         Navigator.pop(context);
+      } else {
+        throw Exception(
+          _provider.errorMessage ?? 'تعذر إنشاء الفيديو أو حفظه في المعرض',
+        );
       }
     } catch (e) {
       if (mounted) {

@@ -38,7 +38,9 @@ class _MergeScreenState extends State<MergeScreen> {
       final provider = context.read<VideoEditorProvider>();
       final result = await provider.mergeVideos(_selectedVideos);
 
-      if (result != null && mounted) {
+      if (!mounted) return;
+
+      if (result != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Row(
@@ -53,6 +55,10 @@ class _MergeScreenState extends State<MergeScreen> {
           ),
         );
         Navigator.pop(context);
+      } else {
+        throw Exception(
+          provider.errorMessage ?? 'تعذر إنشاء الفيديو أو حفظه في المعرض',
+        );
       }
     } catch (e) {
       if (mounted) {

@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:easy_video_editor/easy_video_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class VideoEditorProvider extends ChangeNotifier {
   String? _videoPath;
@@ -18,6 +22,65 @@ class VideoEditorProvider extends ChangeNotifier {
   double get exportProgress => _exportProgress;
   bool get isProcessing => _isProcessing;
   String? get errorMessage => _errorMessage;
+
+  Future<String> _createOutputPath(String operation) async {
+    final documentsDirectory = await getApplicationDocumentsDirectory();
+    final exportDirectory = Directory(
+      p.join(documentsDirectory.path, 'PngoSave', 'exports'),
+    );
+    await exportDirectory.create(recursive: true);
+
+    return p.join(
+      exportDirectory.path,
+      'PngoSave_${operation}_${DateTime.now().millisecondsSinceEpoch}.mp4',
+    );
+  }
+
+  Future<String> _exportAndSave(
+    VideoEditorBuilder editor,
+    String operation,
+  ) async {
+    final requestedOutputPath = await _createOutputPath(operation);
+    final outputPath = await editor.export(
+      outputPath: requestedOutputPath,
+      onProgress: (progress) {
+        _exportProgress = progress;
+        notifyListeners();
+      },
+    );
+
+    if (outputPath == null || outputPath.isEmpty) {
+      throw Exception('لم يتم إنشاء ملف الفيديو المعدل');
+    }
+
+    final outputFile = File(outputPath);
+    if (!await outputFile.exists() || await outputFile.length() == 0) {
+      throw Exception('ملف الفيديو الناتج غير صالح');
+    }
+
+    // Saving is part of a successful edit. Do not report success until the
+    // processed file is actually visible in the device gallery.
+    await Gal.putVideo(outputPath, album: 'PngoSave');
+
+    _videoPath = outputPath;
+    _processedVideoPath = outputPath;
+    _exportProgress = 1.0;
+
+    // Refreshing preview data is useful but should not invalidate a video that
+    // has already been exported and saved successfully.
+    try {
+      final refreshedEditor = VideoEditorBuilder(videoPath: outputPath);
+      _metadata = await refreshedEditor.getVideoMetadata();
+      _thumbnailPath = await refreshedEditor.generateThumbnail(
+        positionMs: 1000,
+        quality: 85,
+        width: 320,
+        height: 240,
+      );
+    } catch (_) {}
+
+    return outputPath;
+  }
 
   Future<void> loadVideo(String path) async {
     try {
@@ -53,12 +116,7 @@ class VideoEditorProvider extends ChangeNotifier {
       final editor = VideoEditorBuilder(videoPath: _videoPath!)
           .trim(startTimeMs: startMs, endTimeMs: endMs);
 
-      final outputPath = await editor.export(
-        onProgress: (progress) {
-          _exportProgress = progress;
-          notifyListeners();
-        },
-      );
+      final outputPath = await _exportAndSave(editor, 'trim');
 
       _processedVideoPath = outputPath;
       _isProcessing = false;
@@ -81,12 +139,7 @@ class VideoEditorProvider extends ChangeNotifier {
       final editor = VideoEditorBuilder(videoPath: _videoPath!)
           .merge(otherVideoPaths: otherPaths);
 
-      final outputPath = await editor.export(
-        onProgress: (progress) {
-          _exportProgress = progress;
-          notifyListeners();
-        },
-      );
+      final outputPath = await _exportAndSave(editor, 'merge');
 
       _processedVideoPath = outputPath;
       _isProcessing = false;
@@ -109,12 +162,7 @@ class VideoEditorProvider extends ChangeNotifier {
       final editor = VideoEditorBuilder(videoPath: _videoPath!)
           .speed(speed: speed);
 
-      final outputPath = await editor.export(
-        onProgress: (progress) {
-          _exportProgress = progress;
-          notifyListeners();
-        },
-      );
+      final outputPath = await _exportAndSave(editor, 'speed');
 
       _processedVideoPath = outputPath;
       _isProcessing = false;
@@ -137,12 +185,7 @@ class VideoEditorProvider extends ChangeNotifier {
       final editor = VideoEditorBuilder(videoPath: _videoPath!)
           .removeAudio();
 
-      final outputPath = await editor.export(
-        onProgress: (progress) {
-          _exportProgress = progress;
-          notifyListeners();
-        },
-      );
+      final outputPath = await _exportAndSave(editor, 'mute');
 
       _processedVideoPath = outputPath;
       _isProcessing = false;
@@ -188,12 +231,7 @@ class VideoEditorProvider extends ChangeNotifier {
       final editor = VideoEditorBuilder(videoPath: _videoPath!)
           .rotate(degree: degree);
 
-      final outputPath = await editor.export(
-        onProgress: (progress) {
-          _exportProgress = progress;
-          notifyListeners();
-        },
-      );
+      final outputPath = await _exportAndSave(editor, 'rotate');
 
       _processedVideoPath = outputPath;
       _isProcessing = false;
@@ -216,12 +254,7 @@ class VideoEditorProvider extends ChangeNotifier {
       final editor = VideoEditorBuilder(videoPath: _videoPath!)
           .crop(aspectRatio: aspectRatio);
 
-      final outputPath = await editor.export(
-        onProgress: (progress) {
-          _exportProgress = progress;
-          notifyListeners();
-        },
-      );
+      final outputPath = await _exportAndSave(editor, 'crop');
 
       _processedVideoPath = outputPath;
       _isProcessing = false;
@@ -244,12 +277,7 @@ class VideoEditorProvider extends ChangeNotifier {
       final editor = VideoEditorBuilder(videoPath: _videoPath!)
           .compress(resolution: resolution);
 
-      final outputPath = await editor.export(
-        onProgress: (progress) {
-          _exportProgress = progress;
-          notifyListeners();
-        },
-      );
+      final outputPath = await _exportAndSave(editor, 'compress');
 
       _processedVideoPath = outputPath;
       _isProcessing = false;
@@ -272,12 +300,7 @@ class VideoEditorProvider extends ChangeNotifier {
       final editor = VideoEditorBuilder(videoPath: _videoPath!)
           .flip(flipDirection: direction);
 
-      final outputPath = await editor.export(
-        onProgress: (progress) {
-          _exportProgress = progress;
-          notifyListeners();
-        },
-      );
+      final outputPath = await _exportAndSave(editor, 'flip');
 
       _processedVideoPath = outputPath;
       _isProcessing = false;
@@ -331,12 +354,7 @@ class VideoEditorProvider extends ChangeNotifier {
         editor = editor.flip(flipDirection: operations['flip'] as FlipDirection);
       }
 
-      final outputPath = await editor.export(
-        onProgress: (progress) {
-          _exportProgress = progress;
-          notifyListeners();
-        },
-      );
+      final outputPath = await _exportAndSave(editor, 'edited');
 
       _processedVideoPath = outputPath;
       _isProcessing = false;
@@ -394,7 +412,7 @@ class VideoEditorProvider extends ChangeNotifier {
     }
 
     try {
-      await Gal.putVideo(_processedVideoPath!, album: 'تطبيق تحرير الفيديو');
+      await Gal.putVideo(_processedVideoPath!, album: 'PngoSave');
       return true;
     } catch (e) {
       _errorMessage = 'خطأ في حفظ الفيديو: $e';

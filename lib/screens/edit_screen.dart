@@ -692,22 +692,23 @@ class _EditScreenState extends State<EditScreen> {
 
     try {
       final provider = context.read<VideoEditorProvider>();
+      String? result;
 
       switch (widget.editType) {
         case EditType.speed:
-          await provider.changeSpeed(_speed);
+          result = await provider.changeSpeed(_speed);
           break;
         case EditType.rotate:
-          await provider.rotateVideo(_rotation);
+          result = await provider.rotateVideo(_rotation);
           break;
         case EditType.crop:
-          await provider.cropVideo(_aspectRatio);
+          result = await provider.cropVideo(_aspectRatio);
           break;
         case EditType.compress:
-          await provider.compressVideo(_resolution);
+          result = await provider.compressVideo(_resolution);
           break;
         case EditType.flip:
-          await provider.flipVideo(_flipDirection);
+          result = await provider.flipVideo(_flipDirection);
           break;
         case EditType.multiple:
           final operations = <String, dynamic>{};
@@ -735,8 +736,14 @@ class _EditScreenState extends State<EditScreen> {
             operations['compress'] = _resolution;
           }
 
-          await provider.applyMultipleOperations(operations);
+          result = await provider.applyMultipleOperations(operations);
           break;
+      }
+
+      if (result == null) {
+        throw Exception(
+          provider.errorMessage ?? 'تعذر إنشاء الفيديو أو حفظه في المعرض',
+        );
       }
 
       if (mounted) {
