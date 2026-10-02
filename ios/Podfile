@@ -65,6 +65,38 @@ post_install do |installer|
     end
   end
 
+  # Firebase 10.x resolves an older gRPC-Core whose dependent template call is
+  # rejected by the stricter Clang shipped with Xcode 16.3+. Apply the
+  # standards-compliant empty template argument list after every pod install.
+  grpc_basic_seq_file = File.expand_path(
+    File.join(
+      'Pods',
+      'gRPC-Core',
+      'src',
+      'core',
+      'lib',
+      'promise',
+      'detail',
+      'basic_seq.h',
+    ),
+    __dir__,
+  )
+  if File.exist?(grpc_basic_seq_file)
+    grpc_source = File.read(grpc_basic_seq_file)
+    old_factory_call = 'Traits::template CallSeqFactory('
+    fixed_factory_call = 'Traits::template CallSeqFactory<>('
+
+    if grpc_source.include?(old_factory_call)
+      File.write(
+        grpc_basic_seq_file,
+        grpc_source.gsub(old_factory_call, fixed_factory_call),
+      )
+      puts 'Patched gRPC-Core basic_seq.h for Xcode template parsing.'
+    elsif !grpc_source.include?(fixed_factory_call)
+      raise 'Unsupported gRPC-Core basic_seq.h layout; compatibility patch was not applied.'
+    end
+  end
+
   awesome_pod_file = File.expand_path(
     File.join(
       'plugins',
