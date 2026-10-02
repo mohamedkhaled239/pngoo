@@ -56,6 +56,32 @@ workflows:
           pod install --repo-update
       - name: Set up Xcode signing
         script: xcode-project use-profiles
+      - name: Verify provisioning profile supports push
+        script: |
+          PROFILE_MATCHED=false
+          for PROFILE_PATH in "$HOME/Library/MobileDevice/Provisioning Profiles"/*.mobileprovision; do
+            [ -e "$PROFILE_PATH" ] || continue
+            security cms -D -i "$PROFILE_PATH" > /tmp/codemagic-profile.plist
+            PROFILE_APP_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" /tmp/codemagic-profile.plist 2>/dev/null || true)
+
+            if [[ "$PROFILE_APP_IDENTIFIER" == *".com.tolba.videoDownloudApp" ]]; then
+              PROFILE_MATCHED=true
+              PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /tmp/codemagic-profile.plist 2>/dev/null || true)
+              PROFILE_APS_ENVIRONMENT=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:aps-environment" /tmp/codemagic-profile.plist 2>/dev/null || true)
+
+              echo "Using provisioning profile: ${PROFILE_NAME:-unknown}"
+              if [ "$PROFILE_APS_ENVIRONMENT" != "production" ]; then
+                echo "Provisioning profile '${PROFILE_NAME:-unknown}' does not contain aps-environment=production."
+                echo "Enable Push Notifications for com.tolba.videoDownloudApp, regenerate the App Store profile, and replace it in Codemagic."
+                exit 1
+              fi
+            fi
+          done
+
+          if [ "$PROFILE_MATCHED" != "true" ]; then
+            echo "No App Store provisioning profile matched com.tolba.videoDownloudApp."
+            exit 1
+          fi
       - name: Analyze project
         script: flutter analyze --no-fatal-infos
       - name: Run tests
