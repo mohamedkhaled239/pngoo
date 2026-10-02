@@ -45,6 +45,21 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # Older BoringSSL-GRPC podspecs add
+    # -GCC_WARN_INHIBIT_ALL_WARNINGS as a per-file compiler flag. Xcode 16+
+    # parses its `-G` prefix as an unsupported target option. Remove only that
+    # obsolete warning flag while preserving every other compiler setting.
+    if target.name == 'BoringSSL-GRPC'
+      target.source_build_phase.files.each do |file|
+        next unless file.settings && file.settings['COMPILER_FLAGS']
+
+        compiler_flags = file.settings['COMPILER_FLAGS'].split
+        compiler_flags.delete('-GCC_WARN_INHIBIT_ALL_WARNINGS')
+        file.settings['COMPILER_FLAGS'] = compiler_flags.join(' ')
+      end
+    end
+
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
     end
